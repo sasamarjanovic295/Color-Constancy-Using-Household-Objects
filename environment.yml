@@ -1,0 +1,13 @@
+name: color-constancy
+channels:
+  - defaults
+dependencies:
+  - python=3.10
+  - numpy
+  - opencv
+  - matplotlib
+  - pillow
+  - jupyter
+  - pip
+  - pip:
+      - labelme
