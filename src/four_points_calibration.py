@@ -1,156 +1,180 @@
+"""
+Refactored script for color correction based on annotated banknote images.
+Includes:
+- Flexible color sampling from annotated points or a full grid.
+- Correction matrix estimation (least squares).
+- Saving intermediate and final results.
+"""
+
 import json
 from pathlib import Path
 
 import cv2 as cv
 import numpy as np
 
-proj_root = Path(__file__).parent.parent
-src_dir = proj_root / "src"
+# ------------------------- Configuration ------------------------- #
 
+data_root = Path(__file__).parent.parent / "data"
 cap_id = "162962321"
 ref_id = "egp_100"
 
-captured_ann_path = proj_root / "data" / "raw" / "annotations" / f"{cap_id}.json"
-reference_ann_path = proj_root / "data" / "ref" / "annotations" / f"{ref_id}.json"
-captured_img_path = proj_root / "data" / "raw" / "images" / f"{cap_id}.jpg"
-reference_img_path = proj_root / "data" / "ref" / "images" / f"{ref_id}.jpg"
-output_path = proj_root / "data" / "corrected" / "images" / f"{cap_id}_corrected.jpg"
+paths = {
+    "captured_ann": data_root / "raw" / "annotations" / f"{cap_id}.json",
+    "reference_ann": data_root / "ref" / "annotations" / f"{ref_id}.json",
+    "captured_img": data_root / "raw" / "images" / f"{cap_id}.jpg",
+    "reference_img": data_root / "ref" / "images" / f"{ref_id}.jpg",
+    "output_dir": data_root / "corrected" / "images",
+}
 
-with open(captured_ann_path, "r") as f:
-    captured_ann = json.load(f)
-with open(reference_ann_path, "r") as f:
-    reference_ann = json.load(f)
+paths["output_dir"].mkdir(parents=True, exist_ok=True)
 
-
-def show_rgb_image(win_name, rgb_img):
-    if rgb_img.dtype == np.float32:
-        rgb_img = (rgb_img * 255).astype(np.uint8)
-    bgr_img = cv.cvtColor(rgb_img, cv.COLOR_RGB2BGR)
-    cv.imshow(win_name, bgr_img)
+# ------------------------- Utility Functions ------------------------- #
 
 
-def draw_and_show_annotation(
-    win_name, img, ann, color_point=(0, 255, 0), color_bbox=(0, 0, 255)
-):
-    if img.dtype == np.float32:
-        img = (img * 255).astype(np.uint8)
-
-    annotated_img = img.copy()
-
-    for shape in ann["shapes"]:
-        if shape["label"].startswith("pt"):
-            x, y = map(int, shape["points"][0])
-            cv.circle(annotated_img, (x, y), 5, color_point, -1)
-            cv.putText(
-                annotated_img,
-                shape["label"],
-                (x + 10, y - 10),
-                cv.FONT_HERSHEY_SIMPLEX,
-                0.8,
-                (255, 255, 255),
-                2,
-            )
-
-    for shape in ann["shapes"]:
-        if shape["label"] == "bbox":
-            pts = np.array(shape["points"], dtype=np.int32).reshape((-1, 1, 2))
-            cv.polylines(
-                annotated_img, [pts], isClosed=True, color=color_bbox, thickness=3
-            )
-
-    show_rgb_image(win_name, annotated_img)
+def load_json(path):
+    with open(path, "r") as f:
+        return json.load(f)
 
 
-def save_rgb_image(path, rgb_img):
-    if rgb_img.dtype == np.float32:
-        rgb_img = (rgb_img * 255).astype(np.uint8)
-
-    bgr_img = cv.cvtColor(rgb_img, cv.COLOR_RGB2BGR)
-
-    success = cv.imwrite(str(path), bgr_img)
-    if not success:
-        raise IOError(f"Failed to save image to: {path}")
+def load_image_rgb(path):
+    image = cv.imread(str(path)).astype(np.float32) / 255.0
+    return cv.cvtColor(image, cv.COLOR_BGR2RGB)
 
 
-def get_points(ann, label_prefix="pt"):
-    pts = []
-    for shape in ann["shapes"]:
-        label = shape["label"]
-        if label.startswith(label_prefix):
-            pts.append((shape["points"][0][0], shape["points"][0][1]))
+def save_image_rgb(path, image):
+    if image.dtype == np.float32:
+        image = (image * 255).astype(np.uint8)
+    bgr = cv.cvtColor(image, cv.COLOR_RGB2BGR)
+    cv.imwrite(str(path), bgr)
 
-    pts_sorted = sorted(
-        pts,
-        key=lambda p: int(
-            [
-                s["label"][2:]
-                for s in ann["shapes"]
-                if s["points"][0][0] == p[0] and s["points"][0][1] == p[1]
-            ][0]
-        ),
+
+def get_bbox_and_points(ann):
+    bbox_list = [shape["points"] for shape in ann["shapes"] if shape["label"] == "bbox"]
+    bbox = np.array(bbox_list[0], dtype=np.float32) if bbox_list else None
+
+    points = {
+        shape["label"]: shape["points"][0]
+        for shape in ann["shapes"]
+        if shape["label"].startswith("pt")
+    }
+    sorted_pts = [points[f"pt{i}"] for i in range(1, len(points) + 1)]
+    return bbox, np.array(sorted_pts, dtype=np.float32)
+
+
+def find_best_bbox_orientation(bbox, src_pts, dst_pts, ref_shape):
+    min_error = float("inf")
+    best_bbox = bbox.copy()
+    for _ in range(4):
+        transform = cv.getPerspectiveTransform(
+            bbox,
+            np.array(
+                [
+                    [0, 0],
+                    [ref_shape[1] - 1, 0],
+                    [ref_shape[1] - 1, ref_shape[0] - 1],
+                    [0, ref_shape[0] - 1],
+                ],
+                dtype=np.float32,
+            ),
+        )
+        projected = cv.perspectiveTransform(src_pts[None, :, :], transform)[0]
+        error = np.mean((projected - dst_pts) ** 2)
+        if error < min_error:
+            min_error = error
+            best_bbox = bbox.copy()
+        bbox = np.roll(bbox, 1, axis=0)
+    return best_bbox
+
+
+def warp_image(image, bbox, ref_shape):
+    h, w = ref_shape
+    dst_rect = np.array(
+        [[0, 0], [w - 1, 0], [w - 1, h - 1], [0, h - 1]], dtype=np.float32
     )
-    return np.array(pts_sorted)
+    transform = cv.getPerspectiveTransform(bbox, dst_rect)
+    return cv.warpPerspective(image, transform, (w, h), flags=cv.INTER_LINEAR)
 
 
-captured_pts = get_points(captured_ann)
-reference_pts = get_points(reference_ann)
-
-ncaptured_img = cv.imread(str(captured_img_path)).astype(np.float32) / 255.0
-ncaptured_img = cv.cvtColor(ncaptured_img, cv.COLOR_BGR2RGB)
-
-nreference_img = cv.imread(str(reference_img_path)).astype(np.float32) / 255.0
-nreference_img = cv.cvtColor(nreference_img, cv.COLOR_BGR2RGB)
-
-draw_and_show_annotation("Captured Image - Annotated", ncaptured_img, captured_ann)
-draw_and_show_annotation("Reference Image - Annotated", nreference_img, reference_ann)
-
-
-def sample_colors(img, pts, window_size=3):
-    coords = np.round(pts).astype(int)
-    h, w = img.shape[:2]
-    colors = []
-
-    offset = window_size // 2
-
-    for x, y in coords:
-        x1 = np.clip(x - offset, 0, w - 1)
-        x2 = np.clip(x + offset + 1, 0, w)
-        y1 = np.clip(y - offset, 0, h - 1)
-        y2 = np.clip(y + offset + 1, 0, h)
-
-        patch = img[y1:y2, x1:x2, :]
-        avg_color = patch.reshape(-1, 3).mean(axis=0)
-        colors.append(avg_color)
-
-    return np.array(colors)
+def sample_colors_from_points(image, points, region_size=32):
+    h, w, _ = image.shape
+    half = region_size // 2
+    means = []
+    for x, y in points:
+        x, y = int(round(x)), int(round(y))
+        x1, x2 = max(x - half, 0), min(x + half, w)
+        y1, y2 = max(y - half, 0), min(y + half, h)
+        region = image[y1:y2, x1:x2]
+        means.append(region.mean(axis=(0, 1)))
+    return np.array(means)
 
 
-measured_colors = sample_colors(ncaptured_img, captured_pts)
-ref_colors = sample_colors(nreference_img, reference_pts)
+def sample_colors_from_grid(image, region_size=32):
+    h, w, _ = image.shape
+    samples = []
+    for y in range(0, h, region_size):
+        for x in range(0, w, region_size):
+            x2 = min(x + region_size, w)
+            y2 = min(y + region_size, h)
+            region = image[y:y2, x:x2]
+            if region.size > 0:
+                samples.append(region.mean(axis=(0, 1)))
+    return np.array(samples)
 
-# Solve for 3x3 color correction matrix M_est
-# measured_colors @ M_est.T ≈ ref_colors
-M_est_T, *_ = np.linalg.lstsq(measured_colors, ref_colors, rcond=None)
-M_est = M_est_T.T
-print("Estimated color correction matrix M_est:")
-print(M_est)
 
-print("Measured (captured) colors:\n", measured_colors)
-print("Reference colors:\n", ref_colors)
-print("Corrected colors:\n", measured_colors @ M_est.T)
+def estimate_correction_matrix(measured, reference):
+    M_T, *_ = np.linalg.lstsq(measured, reference, rcond=None)
+    return M_T.T
 
-diff = np.abs((measured_colors @ M_est.T) - ref_colors)
-print("Differences:\n", diff)
-print("Mean diff:", diff.mean())
 
-h, w = ncaptured_img.shape[:2]
-flat = ncaptured_img.reshape(-1, 3)
-corrected_flat = np.clip(flat @ M_est.T, 0, 1)
-corrected_img = (corrected_flat.reshape(h, w, 3) * 255).astype(np.uint8)
+def apply_color_matrix(image, matrix):
+    h, w = image.shape[:2]
+    flat = image.reshape(-1, 3)
+    corrected = np.clip(flat @ matrix.T, 0, 1)
+    return (corrected.reshape(h, w, 3) * 255).astype(np.uint8)
 
-show_rgb_image("Corrected Image", corrected_img)
 
-save_rgb_image(output_path, corrected_img)
+# ------------------------- Pipeline Execution ------------------------- #
 
-cv.waitKey(0)
-cv.destroyAllWindows()
+captured_ann = load_json(paths["captured_ann"])
+reference_ann = load_json(paths["reference_ann"])
+
+captured_img = load_image_rgb(paths["captured_img"])
+reference_img = load_image_rgb(paths["reference_img"])
+
+bbox, captured_pts = get_bbox_and_points(captured_ann)
+_, reference_pts = get_bbox_and_points(reference_ann)
+
+aligned_bbox = find_best_bbox_orientation(
+    bbox, captured_pts[:4], reference_pts[:4], reference_img.shape[:2]
+)
+warped_img = warp_image(captured_img, aligned_bbox, reference_img.shape[:2])
+
+# --- Save warped image --- #
+save_image_rgb(paths["output_dir"] / f"{cap_id}_warped.jpg", warped_img)
+
+# --- Estimate M_est using different strategies --- #
+
+# (1) Using 4 points only
+M_4pt = estimate_correction_matrix(
+    sample_colors_from_points(warped_img, reference_pts[:4]),
+    sample_colors_from_points(reference_img, reference_pts[:4]),
+)
+corrected_4pt = apply_color_matrix(captured_img, M_4pt)
+save_image_rgb(paths["output_dir"] / f"{cap_id}_corrected_4pt.jpg", corrected_4pt)
+
+# (2) Using 10 points
+M_10pt = estimate_correction_matrix(
+    sample_colors_from_points(warped_img, reference_pts),
+    sample_colors_from_points(reference_img, reference_pts),
+)
+corrected_10pt = apply_color_matrix(captured_img, M_10pt)
+save_image_rgb(paths["output_dir"] / f"{cap_id}_corrected_10pt.jpg", corrected_10pt)
+
+# (3) Using grid-based sampling
+M_grid = estimate_correction_matrix(
+    sample_colors_from_grid(warped_img), sample_colors_from_grid(reference_img)
+)
+corrected_grid = apply_color_matrix(captured_img, M_grid)
+save_image_rgb(paths["output_dir"] / f"{cap_id}_corrected_grid.jpg", corrected_grid)
+
+print("All correction versions saved successfully.")

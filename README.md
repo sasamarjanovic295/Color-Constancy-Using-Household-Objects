@@ -1,6 +1,6 @@
 # Color-Constancy-Using-Household-Objects
 
-This project explores color constancy using images of household objects and a simple four-point color calibration method. The current implementation corrects color inconsistencies by aligning RGB values from captured and reference images.
+This project explores color constancy using images of household objects and multiple calibration strategies: four-point, multi-point, and grid-based color correction. It aligns RGB values from captured and reference images to improve consistency under different lighting conditions.
 
 ---
 
@@ -8,14 +8,15 @@ This project explores color constancy using images of household objects and a si
 
 ```
 data/
-├── raw/              # Place your captured images and their annotations here
+├── raw/              # Captured images and their annotations (under unknown lighting)
 │   ├── images/
 │   └── annotations/
-├── ref/              # Reference images and annotations (ideal lighting)
+├── ref/              # Reference images and annotations (under ideal lighting)
 │   ├── images/
 │   └── annotations/
-├── corrected/        # Output folder for corrected images
+├── corrected/        # Output images after color correction
 │   └── images/
+src/                  # All scripts and processing code
 ```
 
 ---
@@ -48,17 +49,16 @@ conda activate color-constancy
 - Place **reference images and annotations** in: `data/ref/images/` and `data/ref/annotations/`
 - The corrected images will be saved in: `data/corrected/images/`
 
-### 4. Set the image IDs (manual for now)
+### 4. Set the image IDs
 
-Edit `src/four_point_calibrations.py` and change these two variables to match your image filenames:
+Edit `src/four_points_calibration.py` and set the following variables:
 
 ```python
-cap_id = "your_image_name_without_extension"
-ref_id = "your_reference_name_without_extension"
+cap_id = "your_captured_image_name"
+ref_id = "your_reference_image_name"
 ```
 
 Example:
-
 ```python
 cap_id = "162962321"
 ref_id = "egp_100"
@@ -67,34 +67,56 @@ ref_id = "egp_100"
 ### 5. Run the script
 
 ```bash
-python src/four_point_calibrations.py
+python src/four_points_calibration.py
 ```
 
 This will:
-- Load your images and annotations
-- Apply color correction based on 4-point calibration
-- Save the corrected image to `data/corrected/images/{cap_id}_corrected.jpg`
+- Load the captured and reference images and annotations
+- Warp the captured image using a detected bounding box
+- Compute a 3x3 color correction matrix using:
+  - 4-point calibration
+  - 10-point calibration
+  - Grid-based sampling
+- Apply and save three versions of corrected images:
+  - `{cap_id}_corrected_4pt.jpg`
+  - `{cap_id}_corrected_10pt.jpg`
+  - `{cap_id}_corrected_grid.jpg`
+
+---
+
+## 🧪 Validation and Evaluation (Upcoming)
+
+The next phase of the project will include:
+
+- 📏 **Validation**: Evaluate how well each calibration method corrects color using error metrics such as MSE or ΔE
+- 🤖 **Automatic Detection**: Implement object detection (e.g., YOLO, Detectron2) to find the banknote / color checker automatically
+- 🧪 **Grid Size Testing**: Analyze performance with different grid resolutions (e.g., 16x16, 32x32, 64x64)
+- 🔁 **Batch Processing**: Enable processing of all images in the dataset automatically
+- 📈 **Visualization Tools**: Compare before/after images and show color patches for sample points
 
 ---
 
 ## 📎 Notes
 
-- All annotations should be in [LabelMe](https://github.com/wkentaro/labelme) format (`.json`).
-- Ensure your annotations have `pt1`, `pt2`, `pt3`, `pt4` points labeled in both captured and reference images.
-- Bounding box (`bbox`) is optional, but supported for visualization.
+- All annotations are in [LabelMe](https://github.com/wkentaro/labelme) format (`.json`).
+- Captured images should have:
+  - Bounding box (`bbox`) of the object (e.g., banknote)
+  - At least 4 to 10 point annotations (`pt1`–`ptN`)
+- Reference images require only `pt` points (no `bbox` required).
 
 ---
 
 ## ✅ TODO
 
-- [ ] Auto-detect orientation mismatch
-- [ ] Support batch processing of images
-- [ ] Add GUI or CLI for setting image IDs
-- [ ] Automatic loading of matching reference by filename pattern
+- [ ] Add quantitative validation (MSE, ΔE)
+- [ ] Test various grid sizes for sampling
+- [ ] Implement automatic object/ROI detection
+- [ ] Add CLI or GUI for selecting image IDs or processing modes
+- [ ] Batch processing support
 
 ---
 
 ## 🧠 Author
 
 Sasa Marjanovic  
-2024–2025 Master's Thesis Project  
+2024–2025 Master's Thesis Project
