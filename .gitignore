@@ -1,0 +1,96 @@
+# Python bytecode
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Jupyter notebook checkpoints
+.ipynb_checkpoints/
+
+# VSCode and PyCharm configs
+.vscode/
+.idea/
+
+# Environment folders
+.venv/
+env/
+venv/
+ENV/
+
+# OS-generated files
+.DS_Store
+Thumbs.db
+
+# Logs and debug
+*.log
+*.tmp
+*.swp
+
+# Data artifacts
+*.csv
+*.tsv
+#*.json
+*.xml
+*.xlsx
+*.xls
+
+# Model files
+*.h5
+*.hdf5
+*.ckpt
+*.pb
+*.tflite
+*.onnx
+*.pt
+*.pth
+*.joblib
+*.pkl
+
+# Image / result outputs
+*.png
+#*.jpg
+*.jpeg
+*.bmp
+*.gif
+*.tif
+*.tiff
+*.svg
+*.webp
+
+# Intermediate data/results
+data/interim/
+data/tmp/
+data/temp/
+data/__temp__/
+
+# Experiment folders
+outputs/
+results/
+runs/
+logs/
+checkpoints/
+weights/
+snapshots/
+
+# Cache
+.cache/
+*.cache
+
+# Notebook exported outputs
+*.nbconvert.ipynb
+
+# Unit test / coverage
+htmlcov/
+.tox/
+.coverage
+coverage.xml
+*.cover
+.cache/
+.pytest_cache/
+nosetests.xml
+test-output/
+
+# Build artifacts
+build/
+dist/
+*.egg-info/
+
