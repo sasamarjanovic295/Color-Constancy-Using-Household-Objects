@@ -8,7 +8,6 @@ Pokretanje:
     npr. python test_hand_segmentation.py data/train/IMG_hand.jpeg
 
 Opcije:
-    --erosion N     Veličina erosion kernela (default: 15)
     --no-view       Ne prikazuj OpenCV prozore
 """
 
@@ -25,7 +24,6 @@ import numpy as np
 # ── Argumenti ────────────────────────────────────────────────────────────────
 parser = argparse.ArgumentParser(description="Hand segmentation test")
 parser.add_argument("image_path", help="Path to image")
-parser.add_argument("--erosion", type=int, default=15, help="Erosion kernel size")
 parser.add_argument("--no-view", action="store_true", help="Skip OpenCV display")
 args = parser.parse_args()
 
@@ -65,7 +63,7 @@ img_rgb = cv.cvtColor(bgr, cv.COLOR_BGR2RGB).astype(np.float32) / 255.0
 print(f"    Rezolucija: {img_rgb.shape[1]} × {img_rgb.shape[0]} px")
 
 # ── Detekcija i segmentacija ─────────────────────────────────────────────────
-print(f"\n[2] Pokrećem detect_and_segment (log=True, erosion={args.erosion}) ...")
+print("\n[2] Pokrećem detect_and_segment (log=True) ...")
 from src.hand_segmentation import detect_and_segment, HandSegmentationResult
 
 output_dir = Path("debug_output")
@@ -75,7 +73,6 @@ result = detect_and_segment(
     log=True,
     save=True,
     output_dir=output_dir,
-    erosion_kernel=args.erosion,
 )
 
 # ── Rezultati ────────────────────────────────────────────────────────────────
@@ -118,10 +115,13 @@ else:
 print(f"\n[3] Vizualizacije:")
 for fname in [
     "hand_viz_01_landmarks.jpg",
-    "hand_viz_02_convex_hull.jpg",
-    "hand_viz_03_mask_raw.jpg",
-    "hand_viz_04_mask_eroded.jpg",
-    "hand_viz_05_overlay.jpg",
+    "hand_viz_02_M1_skeleton.jpg",
+    "hand_viz_03_M2_dilated.jpg",
+    "hand_viz_04_skin_sample.jpg",
+    "hand_viz_05_Mab.jpg",
+    "hand_viz_06_M3.jpg",
+    "hand_viz_07_output_mask.jpg",
+    "hand_viz_08_overlay.jpg",
 ]:
     p = output_dir / fname
     if p.exists():
