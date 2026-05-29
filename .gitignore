@@ -42,6 +42,7 @@ Thumbs.db
 *.onnx
 *.pt
 *.pth
+*.task
 *.joblib
 *.pkl
 
