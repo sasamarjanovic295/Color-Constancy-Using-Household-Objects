@@ -1,0 +1,12 @@
+,method,ref,consistent,total,rate_pct
+0,affine,banknote,0,20,0.00
+1,affine,colorchecker,1,20,5.00
+2,baseline,none,6,20,30.00
+3,gray_world,none,4,20,20.00
+4,linear,banknote,0,20,0.00
+5,linear,colorchecker,0,20,0.00
+6,poly2,banknote,0,20,0.00
+7,poly2,colorchecker,1,20,5.00
+8,poly3_cheung,banknote,0,20,0.00
+9,poly3_cheung,colorchecker,1,20,5.00
+10,shades_of_gray,none,1,20,5.00

@@ -10,6 +10,10 @@ __pycache__/
 .vscode/
 .idea/
 
+# Internal working/config directory and project notes — not on GitHub
+.claude/
+CLAUDE.md
+
 # Environment folders
 .venv/
 env/
@@ -57,15 +61,21 @@ Thumbs.db
 *.svg
 *.webp
 
-# Intermediate data/results
-data/interim/
-data/tmp/
-data/temp/
-data/__temp__/
+# Raw phone camera captures (staging, before conversion to .jpeg dataset)
+*.heic
+*.HEIC
+
+# Dataset — distributed separately as a downloadable zip, not on GitHub
+data/
+
+# Archived/abandoned prototype code — kept locally only, never on GitHub
+src/_old_srcipts/
+
+# Thesis-writing reference material — not on GitHub
+files_for_writting_thesis/
 
 # Experiment folders
 outputs/
-results/
 runs/
 logs/
 checkpoints/
@@ -95,3 +105,6 @@ build/
 dist/
 *.egg-info/
 
+# Keep results/ tracked (only ~10MB, useful for others to explore/reproduce
+# analysis) despite the *.csv / *.png ignores above
+!results/**

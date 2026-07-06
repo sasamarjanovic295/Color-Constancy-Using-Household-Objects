@@ -1,0 +1,12 @@
+,correction_method,reference_object,test_reference,test_de_mean,test_de_median,n_test,training_de_mean
+10,shades_of_gray,none,CC,7.28,7.68,1155,
+2,baseline,none,CC,8.08,6.90,1155,
+7,poly2,colorchecker,BN,9.96,9.73,1048,2.66
+1,affine,colorchecker,BN,10.18,9.78,1048,3.93
+9,poly3_cheung,colorchecker,BN,10.22,10.24,1048,2.19
+5,linear,colorchecker,BN,10.57,10.16,1048,4.70
+3,gray_world,none,CC,12.82,13.12,1155,
+4,linear,banknote,CC,13.11,11.08,1048,5.46
+0,affine,banknote,CC,15.79,15.02,1048,4.98
+6,poly2,banknote,CC,17.88,16.74,1048,4.53
+8,poly3_cheung,banknote,CC,19.08,18.50,1048,4.38

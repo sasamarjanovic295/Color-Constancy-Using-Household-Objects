@@ -1,0 +1,23 @@
+,dimension,level,de_mean_after,n_images,mean_ita,std_ita,cv_ita
+0,Person,1,11.45,240,67.07,4.74,7.03
+1,Person,2,13.34,240,47.57,8.01,17.89
+2,Person,3,13.49,240,38.10,4.96,20.86
+3,Person,4,13.35,240,51.44,5.80,11.72
+4,Person,5,12.37,240,62.71,3.16,5.03
+5,Lighting,L1,12.56,200,52.43,,
+6,Lighting,L2,11.64,200,56.12,,
+7,Lighting,L3,13.97,200,52.10,,
+8,Lighting,L4,14.06,200,51.55,,
+9,Lighting,L5,14.26,200,51.59,,
+10,Lighting,L6,10.15,200,56.55,,
+11,Hand,left,12.82,600,53.11,5.38,11.79
+12,Hand,right,12.82,600,53.68,5.28,13.22
+13,Palm orientation,dorsal,12.83,600,45.79,5.83,16.74
+14,Palm orientation,palm,12.81,600,60.99,4.84,8.27
+15,Denomination,5,12.70,240,53.11,4.90,11.69
+16,Denomination,10,12.90,240,53.54,5.09,12.34
+17,Denomination,20,12.79,240,53.21,5.47,12.57
+18,Denomination,50,13.12,240,53.90,6.10,14.08
+19,Denomination,100,12.60,240,53.21,5.52,13.03
+20,Banknote side,double_number,13.00,600,53.58,5.52,13.00
+21,Banknote side,single_number,12.65,600,53.20,5.17,12.05

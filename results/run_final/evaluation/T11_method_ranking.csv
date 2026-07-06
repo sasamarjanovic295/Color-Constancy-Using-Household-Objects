@@ -1,0 +1,12 @@
+,method,reference,mean_std_ita
+3,gray_world,none,5.33
+10,shades_of_gray,none,5.45
+2,baseline,none,7.62
+9,poly3_cheung,colorchecker,8.28
+1,affine,colorchecker,8.58
+7,poly2,colorchecker,9.81
+5,linear,colorchecker,10.12
+6,poly2,banknote,41.41
+0,affine,banknote,46.06
+8,poly3_cheung,banknote,51.66
+4,linear,banknote,61.22

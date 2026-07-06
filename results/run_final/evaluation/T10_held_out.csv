@@ -1,0 +1,12 @@
+,method,ref,ΔE00_train,ΔE00_held,ITA_train,ITA_held
+0,affine,banknote,15.72,16.26,47.32,46.72
+1,affine,colorchecker,3.96,3.77,19.21,29.76
+2,baseline,none,7.52,11.28,1.80,10.80
+3,gray_world,none,13.03,11.64,52.85,56.12
+4,linear,banknote,13.13,12.96,-4.61,17.21
+5,linear,colorchecker,4.76,4.32,14.51,28.37
+6,poly2,banknote,17.78,18.55,37.05,37.70
+7,poly2,colorchecker,2.71,2.38,20.30,31.47
+8,poly3_cheung,banknote,19.05,19.28,30.79,34.97
+9,poly3_cheung,colorchecker,2.18,2.20,24.67,33.00
+10,shades_of_gray,none,7.40,6.62,34.61,39.09

@@ -1,0 +1,9 @@
+correction_method,affine,affine,baseline,gray_world,linear,linear,poly2,poly2,poly3_cheung,poly3_cheung,shades_of_gray
+reference_object,banknote,colorchecker,none,none,banknote,colorchecker,banknote,colorchecker,banknote,colorchecker,none
+person_id,,,,,,,,,,,
+1,30.50,5.94,8.99,4.74,69.60,6.90,23.47,7.03,30.49,6.11,5.15
+2,63.92,8.83,8.42,8.01,46.15,10.24,51.99,10.54,65.26,8.84,5.85
+3,57.37,9.99,6.29,4.96,54.61,11.65,52.45,10.81,64.76,9.61,5.44
+4,43.06,11.82,8.80,5.80,61.61,13.85,50.41,12.59,58.66,10.33,6.92
+5,35.44,6.33,5.60,3.16,74.14,7.96,28.72,8.09,39.13,6.49,3.86
+Mean,46.06,8.58,7.62,5.33,61.22,10.12,41.41,9.81,51.66,8.28,5.45

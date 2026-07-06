@@ -1,122 +1,132 @@
-# Color-Constancy-Using-Household-Objects
+# Color Constancy Using Household Objects
 
-This project explores color constancy using images of household objects and multiple calibration strategies: four-point, multi-point, and grid-based color correction. It aligns RGB values from captured and reference images to improve consistency under different lighting conditions.
+Master's thesis project exploring whether Euro banknotes can replace professional
+ColorChecker cards for color-calibrating photographs, enabling objective skin tone
+measurement (ITA) without specialized equipment.
+
+**Author:** Sasa Marjanovic | **Institution:** FERIT Osijek, JJ Strossmayer University | **Year:** 2025/2026
 
 ---
 
-## 📦 Project Structure
+## Project Structure
 
 ```
+calibrate_single.py           # Single-image calibration pipeline
+calibrate_dataset.py           # Batch runner over full dataset
+evaluate_results.py            # Evaluation: 15+ tables and 14 figures
+process_images.py              # Image preprocessing (rotation, crop)
+sample_reference_banknotes.py  # Generate reference banknote samples
+
+src/
+  colorchecker.py              # SpyderCheckr Photo (SCK300) detection + measurement
+  banknote_detection.py        # SIFT+RANSAC Euro banknote detection
+  banknote_sampling.py         # Grid-based banknote color sampling
+  detection.py                 # Low-level SIFT+RANSAC homography engine
+  hand_segmentation_v2.py      # MediaPipe hand/skin segmentation
+  skin_measurement.py          # ITA skin tone measurement (Chardon 1991)
+  color_calibration.py         # Correction methods (linear, affine, poly2, poly3, etc.)
+  evaluation.py                # Metrics, dataclasses, CSV I/O
+  reference_data.py            # SCK300 Lab reference values (darktable)
+
+tests/                         # Unit tests
 data/
-├── raw/              # Captured images and their annotations (under unknown lighting)
-│   ├── images/
-│   └── annotations/
-├── ref/              # Reference images and annotations (under ideal lighting)
-│   ├── images/
-│   └── annotations/
-├── corrected/        # Output images after color correction
-│   └── images/
-src/                  # All scripts and processing code
+  annotations.json             # Master annotation file (1203 images)
+  images/                      # Preprocessed images
+  ref/                         # Banknote reference templates per denomination
+results/                       # Experiment outputs (CSV + visualizations)
 ```
 
 ---
 
-## 🚀 How to Run
+## Pipeline Overview
 
-### 1. Clone the repository
+Each image contains three objects: a hand, a ColorChecker (SCK300), and a Euro banknote.
 
-```bash
-git clone https://github.com/sasamarjanovic295/Color-Constancy-Using-Household-Objects.git
-cd Color-Constancy-Using-Household-Objects
+```
+1. Detect ColorChecker  ->  48 swatch colors (XYZ-D65)
+2. Detect banknote      ->  N paired color samples (measured + reference)
+3. Segment hand         ->  binary skin mask
+
+4. For each correction method x reference object:
+   - Fit calibration matrix (XYZ color space)
+   - Apply to full image
+   - Measure skin tone (ITA) on corrected image
+   - Compute DE00 on ColorChecker swatches (ground truth)
 ```
 
-### 2. Create and activate the Anaconda environment
+**Correction methods:** linear (3x3), affine (3x4), poly2 (30 params), poly3 Cheung (60 params), Gray World, Shades of Gray.
+
+---
+
+## Quick Start
+
+### 1. Install dependencies
 
 ```bash
-conda env create -f environment.yml
-conda activate color-constancy
+pip install -r requirements.txt
 ```
 
-> If you haven't created `environment.yml` yet, export your current environment:
->
-> ```bash
-> conda env export --no-builds | grep -v "prefix:" > environment.yml
-> ```
-
-### 3. Add data
-
-- Place **captured images and annotations** in: `data/raw/images/` and `data/raw/annotations/`
-- Place **reference images and annotations** in: `data/ref/images/` and `data/ref/annotations/`
-- The corrected images will be saved in: `data/corrected/images/`
-
-### 4. Set the image IDs
-
-Edit `src/four_points_calibration.py` and set the following variables:
+### 2. Calibrate a single image
 
 ```python
-cap_id = "your_captured_image_name"
-ref_id = "your_reference_image_name"
+from calibrate_single import calibrate_image
+
+results = calibrate_image(
+    image_srgb,                    # float32 sRGB [0,1]
+    denomination=20,               # Euro denomination
+    side="single_number",          # Banknote side
+    ref_dir=Path("data/ref"),      # Reference templates
+    methods=["affine", "poly2"],   # Correction methods
+)
 ```
 
-Example:
-```python
-cap_id = "162962321"
-ref_id = "egp_100"
-```
-
-### 5. Run the script
+### 3. Run full dataset
 
 ```bash
-python src/four_points_calibration.py
+python calibrate_dataset.py \
+  --data-dir data/ \
+  --output results/run_v3_all \
+  --methods linear affine poly2 poly3_cheung gray_world shades_of_gray \
+  --resume
 ```
 
-This will:
-- Load the captured and reference images and annotations
-- Warp the captured image using a detected bounding box
-- Compute a 3x3 color correction matrix using:
-  - 4-point calibration
-  - 10-point calibration
-  - Grid-based sampling
-- Apply and save three versions of corrected images:
-  - `{cap_id}_corrected_4pt.jpg`
-  - `{cap_id}_corrected_10pt.jpg`
-  - `{cap_id}_corrected_grid.jpg`
+### 4. Evaluate results
+
+```bash
+python evaluate_results.py results/run_v3_all/results.csv \
+  --output-dir results/run_v3_all/evaluation
+```
+
+### 5. Run tests
+
+```bash
+pytest tests/ -v
+```
 
 ---
 
-## 🧪 Validation and Evaluation (Upcoming)
+## Dataset
 
-The next phase of the project will include:
-
-- 📏 **Validation**: Evaluate how well each calibration method corrects color using error metrics such as MSE or ΔE
-- 🤖 **Automatic Detection**: Implement object detection (e.g., YOLO, Detectron2) to find the banknote / color checker automatically
-- 🧪 **Grid Size Testing**: Analyze performance with different grid resolutions (e.g., 16x16, 32x32, 64x64)
-- 🔁 **Batch Processing**: Enable processing of all images in the dataset automatically
-- 📈 **Visualization Tools**: Compare before/after images and show color patches for sample points
+- **1203 images**: 5 persons, 6 lighting conditions (L1-L6), 5 denominations, 2 banknote sides, 2 hands, 2 orientations
+- **L2 held out** for generalization testing
+- Each image: hand + SpyderCheckr Photo (SCK300) + Euro banknote
+- Annotations: `data/annotations.json`
 
 ---
 
-## 📎 Notes
+## Key Metrics
 
-- All annotations are in [LabelMe](https://github.com/wkentaro/labelme) format (`.json`).
-- Captured images should have:
-  - Bounding box (`bbox`) of the object (e.g., banknote)
-  - At least 4 to 10 point annotations (`pt1`–`ptN`)
-- Reference images require only `pt` points (no `bbox` required).
-
----
-
-## ✅ TODO
-
-- [ ] Add quantitative validation (MSE, ΔE)
-- [ ] Test various grid sizes for sampling
-- [ ] Implement automatic object/ROI detection
-- [ ] Add CLI or GUI for selecting image IDs or processing modes
-- [ ] Batch processing support
+| Metric | Purpose |
+|--------|---------|
+| DE00 on CC swatches | Calibration accuracy (ground truth) |
+| std(ITA) across lightings | Skin tone measurement stability |
+| Chardon consistency | Categorical stability across conditions |
+| Wilcoxon signed-rank | Statistical significance of differences |
 
 ---
 
-## 🧠 Author
+## References
 
-Sasa Marjanovic  
-2024–2025 Master's Thesis Project
+- Chardon, A., Cretois, I., & Hourseau, C. (1991). Skin colour typology and suntanning pathways. *International Journal of Cosmetic Science*.
+- Cheung, V., Westland, S., Connah, D., & Ripamonti, C. (2004). A comparative study of the characterisation of colour cameras. *Journal of the Society of Dyers and Colourists*.
+- Ly, B. C. K., et al. (2020). Research Techniques Made Simple: Cutaneous Colorimetry. *Journal of Investigative Dermatology*.

@@ -1,0 +1,12 @@
+,correction_method,reference_object,de_before_mean,de_before_std,de_after_mean,de_after_median,de_after_p95,n,improvement_pct
+0,affine,banknote,7.69,2.99,15.79,12.93,29.86,1048,-105.37
+1,affine,colorchecker,8.08,3.19,3.93,2.82,10.92,1155,51.36
+2,baseline,none,8.08,3.19,8.08,7.03,12.01,1155,0.00
+3,gray_world,none,8.08,3.19,12.82,14.22,20.38,1155,-58.64
+4,linear,banknote,7.69,2.99,13.11,9.82,29.35,1048,-70.49
+5,linear,colorchecker,8.08,3.19,4.70,4.21,9.18,1155,41.88
+6,poly2,banknote,7.69,2.99,17.88,13.99,36.22,1048,-132.52
+7,poly2,colorchecker,8.08,3.19,2.66,2.29,5.56,1155,67.04
+8,poly3_cheung,banknote,7.69,2.99,19.08,15.25,39.68,1048,-148.15
+9,poly3_cheung,colorchecker,8.08,3.19,2.19,1.92,4.47,1155,72.96
+10,shades_of_gray,none,8.08,3.19,7.28,7.51,11.99,1155,9.87

@@ -1,0 +1,28 @@
+{
+  "timestamp": "2026-06-27T12:00:13.745835+00:00",
+  "python_version": "3.13.3",
+  "platform": "macOS-15.6.1-arm64-arm-64bit-Mach-O",
+  "data_dir": "data",
+  "output_dir": "results/run_final",
+  "split_filter": "all",
+  "methods": null,
+  "n_images": 1200,
+  "resume": true,
+  "save_corrected": false,
+  "cell_size": 32,
+  "argv": [
+    "calibrate_dataset.py",
+    "--data-dir",
+    "data/",
+    "--output",
+    "results/run_final",
+    "--split",
+    "all",
+    "--no-save-corrected",
+    "--workers",
+    "2",
+    "--csv-interval",
+    "5",
+    "--resume"
+  ]
+}

@@ -1,0 +1,8 @@
+,bn_n_samples,bn_n_samples,cc_de_mean_after,cc_de_mean_after
+banknote_side,double_number,single_number,double_number,single_number
+denomination,,,,
+5,344.00,438.00,18.01,18.13
+10,342.00,432.00,16.06,13.62
+20,320.00,383.00,13.09,16.22
+50,309.00,370.00,14.23,15.66
+100,320.00,380.00,16.58,22.70
